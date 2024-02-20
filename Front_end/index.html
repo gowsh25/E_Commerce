@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Category List</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>Category List</h2>
+      <div class="form-group">
+        <input
+          type="text"
+          id="searchQuery"
+          class="form-control"
+          placeholder="Search "
+        />
+        <button id="searchButton" class="btn btn-primary mt-2 mb-1">Search</button>
+      </div>
+      <div>
+        <button
+          id="viewAllButton"
+          class="btn btn-outline-primary mb-2"
+          type="button"
+        >
+          View All Products
+        </button></div>
+      <table class="table table-bordered table-hover">
+        <thead class="thead-dark">
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Stock</th>
+            <th scope="col">Date Added</th>
+          </tr>
+        </thead>
+        <tbody id="categoryTableBody">
+          <!-- Categories will be dynamically filled -->
+        </tbody>
+      </table>
+      <div id="pagination" class="mt-3 mb-2 d-flex justify-content-center">
+        <!--PAGINATION_CONTENT-->
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+      document
+        .getElementById("searchButton")
+        .addEventListener("click", function () {
+          const searchTerm = document.getElementById("searchQuery").value;
+          window.location.href = `/search?query=${encodeURIComponent(
+            searchTerm
+          )}`;
+        });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        fetchCategories();
+
+        document
+          .getElementById("searchButton")
+          .addEventListener("click", function () {
+            const searchTerm = document.getElementById("searchInput").value;
+            fetchCategories(1, searchTerm); // Pass the search term to fetchCategories
+          });
+
+        document
+          .getElementById("viewAllButton")
+          .addEventListener("click", function () {
+            window.location.href = "/products"; // Adjust this URL to your "View All Products" page
+          });
+      });
+
+      function fetchCategories(page = 1, searchTerm = "") {
+        const url = `/category/json?page=${page}&search=${encodeURIComponent(
+          searchTerm
+        )}`;
+        fetch(url)
+          .then((response) => response.json())
+          .then((data) => {
+            const tableBody = document.getElementById("categoryTableBody");
+            tableBody.innerHTML = ""; // Clear existing categories
+            data.categories.forEach((category) => {
+              // Updated line: Wrap the category name in an <a> tag with the href set to the category's specific product page
+              const row = `<tr>
+                <td>${category.category_id}</td>
+                <td><a href="/details/${category.category_id}">${
+                category.category_name
+              }</a></td>
+                <td>${category.stock}</td>
+                <td>${new Date(category.date_added).toLocaleDateString()}</td>
+                </tr>`;
+              tableBody.innerHTML += row;
+            });
+            updatePagination(data.currentPage, data.totalPages);
+          })
+          .catch((error) =>
+            console.error("Error fetching category data:", error)
+          );
+      }
+
+      function updatePagination(currentPage, totalPages) {
+    const paginationDiv = document.getElementById("pagination");
+    paginationDiv.innerHTML = ""; // Clear existing pagination
+
+    // Add 'Previous' button if not on the first page
+    if (currentPage > 1) {
+        paginationDiv.innerHTML += `<button class="btn btn-outline-primary mr-2" onclick="changePage(${currentPage - 1})">Previous</button>`;
+    }
+
+    // Generate page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        // Highlight the current page number and make it non-clickable
+        if (i === currentPage) {
+            paginationDiv.innerHTML += `<span class="btn btn-primary mr-1">${i}</span>`;
+        } else {
+            // Other page numbers are clickable
+            paginationDiv.innerHTML += `<button class="btn btn-outline-primary mr-1" onclick="changePage(${i})">${i}</button>`;
+        }
+    }
+
+    // Add 'Next' button if not on the last page
+    if (currentPage < totalPages) {
+        paginationDiv.innerHTML += `<button class="btn btn-outline-primary" onclick="changePage(${currentPage + 1})">Next</button>`;
+    }
+}
+
+function changePage(page) {
+    // Update the fetchCategories function to accept the search term from the input field
+    const searchTerm = document.getElementById("searchQuery").value;
+    fetchCategories(page, searchTerm);
+    // Update the URL in the browser's address bar without reloading the page
+    const newUrl = window.location.pathname + '?page=' + page + '&search=' + encodeURIComponent(searchTerm);
+    window.history.pushState({path:newUrl}, '', newUrl);
+}
+
+    </script>
+  </body>
+</html>

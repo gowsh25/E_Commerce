@@ -1,0 +1,14 @@
+docker login
+        username : veeragowshika
+        password : veera@123
+docker build -t image .
+docker images
+docker tag image:latest veeragowshika/e_commerce:image
+docker push veeragowshika/e_commerce:image
+
+docker pull veeragowshika/e_commerce:image
+docker run -it -p 3000:3000 veeragowshika/e_commerce:image
+
+
+
+hostname -I

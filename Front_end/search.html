@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Search Products</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h2>Search Products</h2>
+      <div class="form-group">
+        <input
+          type="text"
+          id="searchQuery"
+          class="form-control"
+          placeholder="Search "
+        />
+        <button id="searchButton" class="btn btn-primary mt-2">Search</button>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Product ID</th>
+            <th>Product Name</th>
+            <th>Brand</th>
+            <th>Category name</th>
+            <th>MRP</th>
+            <th>Discount Price</th>
+            <th>Date Added</th>
+          </tr>
+        </thead>
+        <tbody id="productsTableBody"></tbody>
+      </table>
+         <div id="pagination" class="mt-3 mb-2 d-flex justify-content-center">
+        <!--PAGINATION_CONTENT-->
+      </div>
+      
+    </div>
+
+    <script>
+      document
+        .getElementById("searchButton")
+        .addEventListener("click", function () {
+          const searchTerm = document.getElementById("searchQuery").value;
+          window.location.href = `/search?query=${encodeURIComponent(
+            searchTerm
+          )}`;
+          fetchProducts(1); // Fetch starting from the first page
+        });
+
+      function fetchProducts(page = 1) {
+        let queryParams = new URLSearchParams(window.location.search);
+        let query = queryParams.get("query");
+        // console.log(query);
+        // Ensure the URL is correct for your server setup
+        const url = `/searchjson?query=${encodeURIComponent(
+          query
+        )}&page=${page}`;
+
+        fetch(url)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log(data.products);
+            displayProducts(data.products);
+            updatePagination(data.currentPage, data.totalPages);
+          })
+          .catch((error) => {
+            console.error("Error fetching products:", error);
+          });
+      }
+
+      function displayProducts(products) {
+        const tableBody = document.getElementById("productsTableBody");
+        tableBody.innerHTML = products
+          .map(
+            (product) => `
+        <tr>
+            <td>${product.product_id}</td>
+            <td>${product.product_name}</td>
+            <td>${product.brand}</td>
+            <td>${product.categoryName}</td>
+            <td>${product.MRP}</td>
+            <td>${product.discount_price}</td>
+            <td>${new Date(product.date_added).toLocaleDateString()}</td>
+        </tr>
+    `
+          )
+          .join("");
+      }
+
+      function updatePagination(currentPage, totalPages) {
+    const paginationDiv = document.getElementById("pagination");
+    paginationDiv.innerHTML = ""; // Clear existing pagination
+
+    // Add 'Previous' button if not on the first page
+    if (currentPage > 1) {
+        paginationDiv.innerHTML += `<button class="btn btn-outline-primary mr-2" onclick="fetchProducts(${currentPage - 1})">Previous</button>`;
+    }
+
+    // Generate page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        // Highlight the current page number and make it non-clickable
+        if (i === currentPage) {
+            paginationDiv.innerHTML += `<span class="btn btn-primary mr-1">${i}</span>`;
+        } else {
+            // Other page numbers are clickable
+            paginationDiv.innerHTML += `<button class="btn btn-outline-primary mr-1" onclick="fetchProducts(${i})">${i}</button>`;
+        }
+    }
+
+    // Add 'Next' button if not on the last page
+    if (currentPage < totalPages) {
+        paginationDiv.innerHTML += `<button class="btn btn-outline-primary" onclick="fetchProducts(${currentPage + 1})">Next</button>`;
+    }
+}
+
+
+      fetchProducts(1); // Initial fetch without query to display some data
+    </script>
+  </body>
+</html>
